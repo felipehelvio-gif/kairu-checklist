@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Kairu Checklist</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0A0A0A;--bg2:#141414;--bg3:#1E1E1E;--border:#222;--text:#fff;--text2:#aaa;--text3:#555;--orange:#FF6B2B;--green:#34C759;--red:#FF453A;--blue:#5AC8FA;--yellow:#FFD60A;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+html,body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent}
+::-webkit-scrollbar{display:none}
+
+/* Header */
+.header{padding:16px;text-align:center;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10}
+.header h1{font-size:16px;font-weight:800}.header .k{color:var(--orange)}
+.header .sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* Pages */
+.page{display:none;padding:16px;padding-bottom:100px}.page.active{display:block}
+
+/* Lista de Checklists */
+.cl-list{display:flex;flex-direction:column;gap:10px}
+.cl-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:rgba(255,107,43,.1)}
+.cl-card:active{transform:scale(.98);border-color:var(--orange)}
+.cl-card .icon{font-size:32px;flex-shrink:0}
+.cl-card .info{flex:1}
+.cl-card .name{font-size:16px;font-weight:700}
+.cl-card .desc{font-size:12px;color:var(--text2);margin-top:4px;line-height:1.4}
+.cl-card .count{font-size:11px;color:var(--orange);margin-top:6px;font-weight:600}
+.cl-card .arrow{font-size:18px;color:var(--text3)}
+
+/* Header do form */
+.form-header{margin-bottom:20px}
+.form-header h2{font-size:20px;font-weight:800;margin-bottom:4px}
+.form-header p{font-size:13px;color:var(--text2)}
+
+/* Campo nome */
+.name-field{margin-bottom:20px}
+.name-field label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:2px;display:block;margin-bottom:6px;font-weight:600}
+.name-field input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;color:var(--text);font-size:16px;outline:none}
+.name-field input:focus{border-color:var(--orange)}
+
+/* Item do checklist */
+.m-item{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:10px;transition:border-color .2s}
+.m-item.answered{border-color:rgba(52,199,89,.3)}
+.m-item .question{font-size:15px;font-weight:600;line-height:1.4;margin-bottom:12px}
+.m-item .obrig{color:var(--red);margin-left:4px}
+.m-item .hint{font-size:11px;color:var(--text3);margin-top:-8px;margin-bottom:10px}
+
+/* Botões Sim/Não */
+.m-yesno{display:flex;gap:10px}
+.m-yesno button{flex:1;padding:14px;border-radius:12px;border:2px solid var(--border);background:none;color:var(--text2);font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.m-yesno button:active{transform:scale(.96)}
+.m-yesno button.yes{border-color:var(--green);color:var(--green);background:rgba(52,199,89,.06)}
+.m-yesno button.no{border-color:var(--red);color:var(--red);background:rgba(255,69,58,.06)}
+
+/* Input genérico mobile */
+.m-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px;color:var(--text);font-size:16px;outline:none;font-family:var(--font)}
+.m-input:focus{border-color:var(--orange)}
+.m-input-temp{text-align:center;font-size:28px;font-weight:800;letter-spacing:2px;font-family:var(--font)}
+select.m-input{appearance:none;-webkit-appearance:none}
+
+/* Campo de foto */
+.m-foto{margin-top:8px}
+.m-foto-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;border-radius:14px;border:2px dashed var(--border);background:none;color:var(--text2);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:var(--font)}
+.m-foto-btn:active{border-color:var(--orange);color:var(--orange)}
+.m-foto-btn.has-photo{border-style:solid;border-color:var(--green);color:var(--green);background:rgba(52,199,89,.04)}
+.m-foto-preview{width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-top:8px;display:none}
+.m-foto-preview.active{display:block}
+/* File input hidden */
+.m-foto input[type="file"]{display:none}
+
+/* Obs geral */
+.obs-section{margin-top:8px;margin-bottom:16px}
+.obs-section textarea{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;color:var(--text);font-size:14px;outline:none;resize:vertical;min-height:60px;font-family:var(--font)}
+
+/* Submit bar */
+.submit-bar{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);padding:12px 16px;display:flex;gap:10px;z-index:20}
+.submit-bar button{flex:1;padding:16px;border-radius:14px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s}
+.submit-bar button:active{transform:scale(.97)}
+.submit-bar .btn-save{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+.submit-bar .btn-ai{background:var(--orange);color:#fff}
+
+/* Back button */
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:14px;cursor:pointer;margin-bottom:16px;font-family:var(--font);font-weight:600}
+.back-btn:active{border-color:var(--orange)}
+
+/* Result page */
+.result-score{text-align:center;padding:24px}
+.result-score .big{font-size:64px;font-weight:800}
+.result-score .label{font-size:14px;color:var(--text2);margin-top:4px}
+.result-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:18px;white-space:pre-wrap;font-size:14px;line-height:1.7;color:var(--text2)}
+.result-box strong{color:var(--text)}
+
+/* Success */
+.success{text-align:center;padding:60px 20px}
+.success .icon{font-size:64px;margin-bottom:16px}
+.success h2{font-size:22px;font-weight:800;margin-bottom:8px}
+.success p{font-size:14px;color:var(--text2)}
+
+/* Loading */
+.loading{text-align:center;padding:60px}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{margin-top:12px;color:var(--text2);font-size:14px}
+
+/* Progress */
+.progress-bar{height:4px;background:var(--bg3);border-radius:2px;margin-bottom:16px;overflow:hidden}
+.progress-fill{height:100%;background:var(--orange);border-radius:2px;transition:width .3s ease}
+</style>
+</head>
+<body>
+
+<header class="header">
+    <h1><span class="k">K</span>AIRU CHECKLIST</h1>
+    <div class="sub">Preencha o checklist do dia</div>
+</header>
+
+<!-- LISTA DE CHECKLISTS -->
+<div class="page active" id="pageList">
+    <div style="margin-bottom:16px">
+        <h2 style="font-size:18px;font-weight:800">Selecione o checklist</h2>
+        <p style="font-size:13px;color:var(--text2)">Toque no checklist para começar.</p>
+    </div>
+    <div class="cl-list" id="mobileList">
+        <div class="loading"><div class="spinner"></div><p>Carregando...</p></div>
+    </div>
+</div>
+
+<!-- PREENCHIMENTO -->
+<div class="page" id="pageFill">
+    <button class="back-btn" onclick="showPage('pageList')">← Voltar</button>
+    <div class="form-header">
+        <h2 id="fillTitle"></h2>
+        <p id="fillDesc"></p>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="name-field">
+        <label>Quem está preenchendo?</label>
+        <input id="mFillBy" placeholder="Seu nome" autocomplete="off">
+    </div>
+    <div id="mFillItems"></div>
+    <div class="obs-section">
+        <div class="name-field">
+            <label>Observações gerais</label>
+            <textarea id="mFillObs" placeholder="Algo mais que queira registrar?"></textarea>
+        </div>
+    </div>
+    <div class="submit-bar">
+        <button class="btn-ai" onclick="mSubmit()" style="flex:1">📋 Enviar Checklist</button>
+    </div>
+</div>
+
+<!-- RESULTADO -->
+<div class="page" id="pageResult">
+    <button class="back-btn" onclick="showPage('pageList')">← Novo checklist</button>
+    <div id="mResult"></div>
+</div>
+
+<script>
+const API = window.location.origin
+let mChecklists = [], mCurrent = null, answeredCount = 0, totalItems = 0, fotoFiles = {}
+
+// ═══ INIT ═══
+async function init() {
+    try {
+        const r = await fetch(API + '/api/checklists')
+        mChecklists = await r.json()
+        // Se URL tem ?id=xxx, abrir direto
+        const params = new URLSearchParams(window.location.search)
+        const directId = params.get('id')
+        if (directId && mChecklists.find(c => c.id === directId)) {
+            startFill(directId)
+        } else {
+            renderList()
+        }
+    } catch (e) {
+        document.getElementById('mobileList').innerHTML =
+            '<div style="text-align:center;color:var(--red);padding:40px"><div style="font-size:32px;margin-bottom:12px">⚠️</div>Não foi possível conectar ao computador.<br><br><span style="font-size:12px;color:var(--text3)">Verifique se estão na mesma rede Wi-Fi.</span></div>'
+    }
+}
+
+function renderList() {
+    document.getElementById('mobileList').innerHTML = mChecklists.map(cl =>
+        `<div class="cl-card" onclick="startFill('${cl.id}')">
+            <span class="icon">${cl.icone || '📋'}</span>
+            <div class="info">
+                <div class="name">${cl.nome}</div>
+                <div class="desc">${cl.descricao || ''}</div>
+                <div class="count">${cl.items?.length || 0} itens · ${cl.frequencia || 'diário'}</div>
+            </div>
+            <span class="arrow">›</span>
+        </div>`
+    ).join('')
+}
+
+function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+    document.getElementById(id).classList.add('active')
+    window.scrollTo(0, 0)
+}
+
+// ═══ PREENCHER ═══
+function startFill(id) {
+    mCurrent = mChecklists.find(c => c.id === id)
+    if (!mCurrent) return
+    document.getElementById('fillTitle').textContent = (mCurrent.icone || '📋') + ' ' + mCurrent.nome
+    document.getElementById('fillDesc').textContent = mCurrent.descricao || ''
+
+    const items = mCurrent.items || []
+    totalItems = items.length
+    answeredCount = 0
+    fotoFiles = {}
+    updateProgress()
+
+    document.getElementById('mFillItems').innerHTML = items.map(it => {
+        let input = ''
+        switch (it.tipo) {
+            case 'checkbox':
+                input = `<div class="m-yesno">
+                    <button onclick="mToggle(this,'${it.id}','sim')">✅ Sim</button>
+                    <button onclick="mToggle(this,'${it.id}','nao')">❌ Não</button>
+                </div><input type="hidden" id="val_${it.id}" value="">`
+                break
+            case 'temperatura':
+                input = `<input type="number" step="0.1" inputmode="decimal" class="m-input m-input-temp" id="val_${it.id}" placeholder="0.0" onchange="markAnswered(this)">
+                    ${it.min != null ? `<div class="hint">Faixa: ${it.min}°C a ${it.max}°C</div>` : ''}`
+                break
+            case 'numero':
+                input = `<input type="number" inputmode="numeric" class="m-input" id="val_${it.id}" placeholder="${it.prefixo || ''}..." onchange="markAnswered(this)">`
+                break
+            case 'texto':
+                input = `<input type="text" class="m-input" id="val_${it.id}" placeholder="Digite..." onchange="markAnswered(this)">`
+                break
+            case 'selecao':
+                input = `<select class="m-input" id="val_${it.id}" onchange="markAnswered(this)">
+                    <option value="">Selecione...</option>
+                    ${(it.opcoes || []).map(o => `<option value="${o}">${o}</option>`).join('')}
+                </select>`
+                break
+            case 'foto':
+                input = `<div class="m-foto">
+                    <button class="m-foto-btn" onclick="document.getElementById('file_${it.id}').click()" id="fotobtn_${it.id}">📷 Tirar Foto</button>
+                    <input type="file" accept="image/*" capture="environment" id="file_${it.id}" onchange="handlePhoto(this,'${it.id}')">
+                    <img class="m-foto-preview" id="preview_${it.id}">
+                </div>`
+                break
+        }
+        return `<div class="m-item" id="item_${it.id}">
+            <div class="question">${it.texto}${it.obrigatorio ? '<span class="obrig">*</span>' : ''}</div>
+            ${input}
+        </div>`
+    }).join('')
+
+    showPage('pageFill')
+}
+
+function mToggle(btn, id, val) {
+    const input = document.getElementById('val_' + id)
+    const parent = btn.parentElement
+    parent.querySelectorAll('button').forEach(b => b.className = '')
+    if (val === 'sim') { input.value = 'true'; btn.className = 'yes' }
+    else { input.value = 'false'; btn.className = 'no' }
+    document.getElementById('item_' + id).classList.add('answered')
+    answeredCount = document.querySelectorAll('.m-item.answered').length
+    updateProgress()
+}
+
+function markAnswered(el) {
+    if (el.value) el.closest('.m-item').classList.add('answered')
+    answeredCount = document.querySelectorAll('.m-item.answered').length
+    updateProgress()
+}
+
+function updateProgress() {
+    const pct = totalItems > 0 ? (answeredCount / totalItems * 100) : 0
+    document.getElementById('progressFill').style.width = pct + '%'
+}
+
+// ═══ CÂMERA / FOTO ═══
+function handlePhoto(input, itemId) {
+    const file = input.files[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = function (e) {
+        const base64 = e.target.result
+        fotoFiles[itemId] = base64
+
+        // Preview
+        const preview = document.getElementById('preview_' + itemId)
+        preview.src = base64
+        preview.classList.add('active')
+
+        // Botão verde
+        const btn = document.getElementById('fotobtn_' + itemId)
+        btn.textContent = '✅ Foto tirada'
+        btn.classList.add('has-photo')
+
+        document.getElementById('item_' + itemId).classList.add('answered')
+        answeredCount = document.querySelectorAll('.m-item.answered').length
+        updateProgress()
+    }
+    reader.readAsDataURL(file)
+}
+
+// ═══ SUBMIT ═══
+async function mSubmit() {
+    const items = {}
+    const fotos = []
+
+    for (const it of (mCurrent.items || [])) {
+        if (it.tipo === 'checkbox') {
+            const el = document.getElementById('val_' + it.id)
+            items[it.id] = el ? el.value === 'true' : false
+        } else if (it.tipo === 'foto') {
+            // Fotos vão separadas
+        } else {
+            const el = document.getElementById('val_' + it.id)
+            items[it.id] = el ? el.value : ''
+        }
+    }
+
+    showPage('pageResult')
+    document.getElementById('mResult').innerHTML = '<div class="loading"><div class="spinner"></div><p>Enviando e analisando com IA...</p></div>'
+
+    try {
+        // Upload fotos primeiro
+        for (const [itemId, base64] of Object.entries(fotoFiles)) {
+            try {
+                const r = await fetch(API + '/api/foto', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ base64, checklistId: mCurrent.id, itemId })
+                })
+                const data = await r.json()
+                if (data.ok) fotos.push({ itemId, filename: data.filename, path: data.path })
+            } catch (e) { console.log('Foto upload falhou:', e) }
+        }
+
+        // Enviar preenchimento
+        const r = await fetch(API + '/api/preencher', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                checklistId: mCurrent.id,
+                preenchidoPor: document.getElementById('mFillBy').value || 'Mobile',
+                itens: items,
+                observacaoGeral: document.getElementById('mFillObs').value || '',
+                fotos
+            })
+        })
+
+        const data = await r.json()
+
+        if (data.feedback) {
+            const scoreColor = data.score >= 8 ? 'var(--green)' : data.score >= 5 ? 'var(--yellow)' : 'var(--red)'
+            document.getElementById('mResult').innerHTML = `
+                <div class="result-score">
+                    <div class="big" style="color:${scoreColor}">${data.score != null ? data.score + '/10' : '—'}</div>
+                    <div class="label">Nota da análise IA</div>
+                </div>
+                <div class="result-box">${data.feedback.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</div>
+                ${fotos.length ? `<div style="margin-top:12px;font-size:13px;color:var(--blue)">📷 ${fotos.length} foto(s) salva(s) no computador</div>` : ''}
+            `
+        } else {
+            document.getElementById('mResult').innerHTML = `
+                <div class="success">
+                    <div class="icon">✅</div>
+                    <h2>Checklist Salvo!</h2>
+                    <p>Suas respostas foram registradas com sucesso.</p>
+                    ${fotos.length ? `<p style="margin-top:8px;color:var(--blue)">📷 ${fotos.length} foto(s) enviada(s)</p>` : ''}
+                </div>
+            `
+        }
+    } catch (e) {
+        document.getElementById('mResult').innerHTML = `
+            <div class="success">
+                <div class="icon">⚠️</div>
+                <h2>Erro</h2>
+                <p style="color:var(--red)">${e.message}</p>
+            </div>
+        `
+    }
+}
+
+init()
+</script>
+</body>
+</html>

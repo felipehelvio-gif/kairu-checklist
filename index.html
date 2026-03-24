@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kairu Checklist</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #101012; --bg2: #18181B; --bg3: #1F1F23;
+            --card: #18181B; --border: #2A2A2F; --border2: #3A3A40;
+            --text: #F8F8F7; --text2: #B0B0B8; --text3: #62626B;
+            --orange: #FF6B2B; --orange-dark: #E85A1E; --orange-glow: rgba(255,107,43,.10);
+            --green: #34C759; --red: #FF453A;
+            --blue: #5AC8FA; --yellow: #FFD60A; --purple: #BF5AF2;
+            --fh: 'Plus Jakarta Sans', sans-serif;
+            --fb: 'DM Sans', sans-serif;
+            --fm: 'JetBrains Mono', monospace;
+            --radius: 16px;
+        }
+        body { font-family: var(--fb); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
+        ::selection { background: var(--orange); color: #fff; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        /* ═══ HEADER ═══ */
+        .header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 28px; border-bottom: 1px solid rgba(255,255,255,.04);
+            background: rgba(16,16,18,.92); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            -webkit-app-region: drag; user-select: none; flex-shrink: 0;
+        }
+        .header-left { display: flex; align-items: center; gap: 14px; }
+        .logo { font-family: var(--fh); font-weight: 800; font-size: 18px; letter-spacing: 2px; }
+        .logo .sub { color: var(--text3); font-weight: 300; font-size: 11px; margin-left: 8px; letter-spacing: 4px; vertical-align: middle; }
+        .badge { padding: 3px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+        .badge-product { background: var(--orange); color: white; }
+        .badge-wa { font-family: var(--fb); font-size: 11px; padding: 5px 14px; border-radius: 8px; cursor: pointer; -webkit-app-region: no-drag; transition: all .2s; }
+        .badge-wa.connected { background: rgba(52,199,89,.12); color: var(--green); border: 1px solid rgba(52,199,89,.15); }
+        .badge-wa.disconnected { background: rgba(255,69,58,.08); color: var(--red); border: 1px solid rgba(255,69,58,.1); }
+        .badge-wa:hover { opacity: .8; }
+        .header-right { display: flex; align-items: center; gap: 8px; -webkit-app-region: no-drag; }
+
+        /* ═══ BOTÕES ═══ */
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 20px; border-radius: 10px; border: none;
+            font-family: var(--fb); font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: all .25s; -webkit-app-region: no-drag;
+        }
+        .btn-primary { background: var(--orange); color: white; }
+        .btn-primary:hover { background: var(--orange-dark); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,107,43,.15); }
+        .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+        .btn-ghost:hover { border-color: var(--orange); color: var(--text); }
+        .btn-sm { padding: 7px 14px; font-size: 11px; border-radius: 8px; }
+        .btn-danger { background: rgba(255,69,58,.1); color: var(--red); border: 1px solid rgba(255,69,58,.1); }
+        .btn-danger:hover { background: rgba(255,69,58,.2); }
+
+        /* ═══ LAYOUT ═══ */
+        .container { display: flex; flex: 1; overflow: hidden; }
+        .sidebar {
+            width: 220px; border-right: 1px solid rgba(255,255,255,.04);
+            padding: 20px 0; display: flex; flex-direction: column; flex-shrink: 0;
+            background: rgba(16,16,18,.5);
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 24px; font-family: var(--fb); font-size: 13px; font-weight: 400;
+            color: var(--text3); cursor: pointer; transition: all .2s;
+            border-left: 3px solid transparent; letter-spacing: .3px;
+        }
+        .nav-item:hover { color: var(--text2); background: rgba(255,255,255,.02); }
+        .nav-item.active { color: var(--orange); border-left-color: var(--orange); background: rgba(255,107,43,.04); font-weight: 600; }
+        .nav-item .icon { font-size: 16px; width: 22px; text-align: center; }
+        .nav-item .count { margin-left: auto; background: var(--bg3); padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; color: var(--text3); font-family: var(--fm); }
+        .sidebar-footer { margin-top: auto; padding: 14px 24px; border-top: 1px solid rgba(255,255,255,.04); }
+
+        .main { flex: 1; overflow-y: auto; padding: 28px 32px; }
+
+        /* ═══ SEÇÃO ═══ */
+        .section-title { font-family: var(--fh); font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+        .section-sub { font-family: var(--fb); font-size: 13px; color: var(--text3); margin-bottom: 24px; font-weight: 300; }
+
+        /* ═══ CARDS ═══ */
+        .card {
+            background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 20px; transition: all .3s; position: relative; overflow: hidden;
+        }
+        .card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: var(--orange); transform: scaleX(0); transform-origin: left; transition: transform .4s;
+        }
+        .card:hover::before { transform: scaleX(1); }
+        .card:hover { border-color: var(--border2); }
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+
+        /* ═══ CHECKLIST CARD ═══ */
+        .cl-card { cursor: pointer; }
+        .cl-card:hover { border-color: var(--orange); transform: translateY(-2px); }
+        .cl-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .cl-icon { font-size: 28px; }
+        .cl-name { font-family: var(--fh); font-size: 16px; font-weight: 700; flex: 1; }
+        .cl-desc { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 300; }
+        .cl-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tag { background: var(--bg3); padding: 4px 10px; border-radius: 100px; font-size: 10px; color: var(--text3); font-weight: 500; letter-spacing: 1px; text-transform: uppercase; }
+        .cl-schedule { display: flex; align-items: center; gap: 4px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 11px; color: var(--blue); font-family: var(--fm); }
+
+        /* ═══ KPI ═══ */
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi {
+            background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 20px 24px; transition: all .3s;
+        }
+        .kpi:hover { border-color: var(--orange); }
+        .kpi-label { font-family: var(--fb); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 2px; font-weight: 500; }
+        .kpi-value { font-family: var(--fh); font-size: 32px; font-weight: 800; margin-top: 6px; letter-spacing: -1px; }
+        .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: var(--fm); }
+        .kpi-value.green { color: var(--green); } .kpi-value.red { color: var(--red); }
+        .kpi-value.orange { color: var(--orange); } .kpi-value.blue { color: var(--blue); }
+
+        /* ═══ RESULTADO ═══ */
+        .result-item {
+            background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 18px 20px; margin-bottom: 12px; cursor: pointer; transition: all .3s;
+            position: relative; overflow: hidden;
+        }
+        .result-item::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: var(--orange); transform: scaleX(0); transform-origin: left; transition: transform .4s;
+        }
+        .result-item:hover::before { transform: scaleX(1); }
+        .result-item:hover { border-color: var(--border2); }
+        .result-item.expanded { border-color: var(--blue); }
+        .result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .result-title { font-family: var(--fh); font-size: 15px; font-weight: 700; }
+        .result-score { font-family: var(--fh); font-size: 22px; font-weight: 800; }
+        .result-meta { font-size: 11px; color: var(--text3); display: flex; gap: 14px; font-family: var(--fb); }
+        .result-body { max-height: 0; overflow: hidden; transition: max-height .4s ease; }
+        .result-item.expanded .result-body { max-height: 800px; }
+        .result-feedback { margin-top: 12px; padding: 16px; background: var(--bg); border-radius: 12px; font-size: 13px; color: var(--text2); line-height: 1.7; white-space: pre-wrap; font-weight: 300; }
+        .result-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+
+        /* ═══ QR / LINK ═══ */
+        .qr-section { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+        .qr-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; text-align: center; flex-shrink: 0; }
+        .qr-box img { width: 200px; height: 200px; border-radius: 12px; }
+        .qr-url { margin-top: 12px; font-family: var(--fm); font-size: 13px; color: var(--orange); font-weight: 400; }
+        .qr-info { flex: 1; min-width: 260px; }
+        .qr-info h3 { font-family: var(--fh); font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+        .qr-info p { font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 14px; font-weight: 300; }
+        .step { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
+        .step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--orange-glow); color: var(--orange); font-family: var(--fh); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .step-text { font-size: 13px; color: var(--text2); line-height: 1.6; font-weight: 300; }
+        .step-text strong { color: var(--text); font-weight: 600; }
+
+        /* ═══ FOTOS ═══ */
+        .fotos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+        .foto-thumb { aspect-ratio: 1; border-radius: 12px; overflow: hidden; cursor: pointer; border: 1px solid var(--border); transition: all .3s; }
+        .foto-thumb:hover { border-color: var(--orange); transform: scale(1.03); }
+        .foto-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* ═══ MODAL ═══ */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 100; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 32px; max-width: 520px; width: 92%; max-height: 85vh; overflow-y: auto; }
+        .modal h2 { font-family: var(--fh); font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+        .modal .subtitle { font-family: var(--fb); font-size: 13px; color: var(--text3); margin-bottom: 20px; font-weight: 300; }
+        .modal label { font-family: var(--fb); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 6px; font-weight: 500; }
+        .modal input, .modal select, .modal textarea {
+            width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+            padding: 10px 14px; color: var(--text); font-size: 13px; margin-bottom: 12px; outline: none;
+            font-family: var(--fb); resize: vertical;
+        }
+        .modal input:focus, .modal select:focus, .modal textarea:focus { border-color: var(--orange); }
+        .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+        .modal-actions .btn { flex: 1; justify-content: center; padding: 12px; }
+        .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+        .tab { padding: 8px 16px; border-radius: 8px; font-family: var(--fb); font-size: 12px; font-weight: 500; cursor: pointer; color: var(--text3); transition: all .2s; }
+        .tab.active { background: var(--orange); color: #fff; font-weight: 700; }
+        .tab:hover:not(.active) { color: var(--text); }
+
+        /* ═══ EMPTY ═══ */
+        .empty { text-align: center; padding: 60px 20px; color: var(--text3); }
+        .empty .icon { font-size: 56px; margin-bottom: 16px; opacity: .3; }
+        .empty .title { font-family: var(--fh); font-size: 18px; font-weight: 700; color: var(--text2); margin-bottom: 6px; }
+
+        /* ═══ WA CONFIG ═══ */
+        .wa-config { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; text-align: center; }
+        .wa-qr { margin: 14px auto; display: none; }
+        .wa-qr img { width: 200px; height: 200px; border-radius: 12px; border: 2px solid var(--border); }
+
+        /* ═══ FOTO MODAL ═══ */
+        .foto-modal { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 200; display: none; align-items: center; justify-content: center; cursor: pointer; }
+        .foto-modal.active { display: flex; }
+        .foto-modal img { max-width: 90%; max-height: 90%; border-radius: 16px; object-fit: contain; }
+
+        /* ═══ MISC ═══ */
+        .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--orange); border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn .4s ease both; }
+        .checkbox-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
+        .checkbox-row input[type="checkbox"] { margin-top: 3px; width: auto; }
+        .checkbox-row span { font-size: 12px; color: var(--text2); line-height: 1.4; }
+
+        /* ═══ BANNER ═══ */
+        .kairu-banner { display: none; padding: 10px 28px; cursor: pointer; } .kairu-banner.active { display: block; }
+        .kairu-banner-inner { border-radius: 12px; padding: 12px 20px; text-align: center; font-size: 13px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+    <div class="header-left">
+        <div class="logo"><span class="k">K</span>AIRU<span class="sub">LABS</span></div>
+        <span class="badge badge-product">CHECKLIST</span>
+    </div>
+    <div class="header-right">
+        <div class="badge badge-wa disconnected" id="waHeaderBadge" onclick="showConfig();switchConfigTab('whatsapp',document.querySelectorAll('.tab')[1])">📱 WhatsApp Desconectado</div>
+        <button class="btn btn-ghost btn-sm" onclick="showLicenseModal()">🔑</button>
+    </div>
+</header>
+
+<!-- BANNER -->
+<div class="kairu-banner" id="kairuBanner" onclick="handleBannerClick()"><div class="kairu-banner-inner" id="kairuBannerInner"></div></div>
+
+<!-- BODY -->
+<div class="container">
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+        <div class="nav-item active" onclick="switchPage('dashboard',this)"><span class="icon">📊</span>Painel</div>
+        <div class="nav-item" onclick="switchPage('checklists',this)"><span class="icon">📋</span>Checklists<span class="count" id="navCl">0</span></div>
+        <div class="nav-item" onclick="switchPage('resultados',this)"><span class="icon">📈</span>Resultados<span class="count" id="navRes">0</span></div>
+        <div class="nav-item" onclick="switchPage('acesso',this)"><span class="icon">📱</span>Acesso Mobile</div>
+        <div class="nav-item" onclick="switchPage('fotos',this)"><span class="icon">📷</span>Fotos<span class="count" id="navFotos">0</span></div>
+        <div class="nav-item" onclick="switchPage('ia',this)"><span class="icon">🤖</span>Chaves Inteligentes</div>
+        <div class="nav-item" style="color:var(--orange)" onclick="showConfig()"><span class="icon">⚙️</span>Configurações</div>
+        
+        <div style="margin-top:auto;margin-left:24px;margin-right:24px;margin-bottom:12px;padding:24px 16px 16px;background:linear-gradient(135deg,rgba(255,107,0,0.1) 0%,var(--bg3) 100%);border-radius:14px;border:1px solid rgba(255,107,0,0.2);cursor:pointer;position:relative;overflow:hidden;transition:all .2s ease;text-align:center" onclick="api.openExternal('https://kairulabs.com/etiquetas')" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='none';">
+            <div style="position:absolute;top:0;left:0;right:0;background:var(--orange);color:#fff;font-size:9px;font-weight:800;padding:3px 0;letter-spacing:1px;text-transform:uppercase">🌟 RECOMENDADO</div>
+            <div style="font-size:38px;margin:12px 0 8px;display:flex;align-items:center;justify-content:center;height:46px">🏷️</div>
+            <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:6px">Kairu Etiquetas</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.4">Imprima etiquetas térmicas em segundos com IA.</div>
+        </div>
+
+        <div class="sidebar-footer" style="margin-top:0">
+            <div style="font-size:10px;color:var(--text3);letter-spacing:1px">KAIRU LABS</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px">v1.0.0</div>
+        </div>
+    </nav>
+
+    <!-- MAIN -->
+    <div class="main">
+        <!-- DASHBOARD -->
+        <div class="page active" id="pageDashboard">
+            <div class="section-title">Painel de Controle</div>
+            <div class="section-sub">Visão geral dos seus checklists operacionais</div>
+            <div class="kpi-row fade-in" id="dashKpis"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" id="dashGrid">
+                <div>
+                    <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text2)">📅 Próximos Envios Agendados</h3>
+                    <div id="dashSchedule" class="card" style="min-height:80px"></div>
+                </div>
+                <div>
+                    <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text2)">🔴 Últimos Preenchimentos</h3>
+                    <div id="dashRecent" class="card" style="min-height:80px"></div>
+                </div>
+            </div>
+
+            <h3 style="font-size:16px;font-weight:700;margin:32px 0 16px;color:var(--text2)">🚀 Ecossistema Kairu</h3>
+            <div class="cards-grid">
+                <div class="card" onclick="api.openExternal('https://kairulabs.com/etiquetas')" style="cursor:pointer;border-left:4px solid var(--orange);background:linear-gradient(135deg,rgba(255,107,0,0.05) 0%,var(--bg2) 100%)">
+                    <h4 style="font-size:14px;color:var(--orange);margin-bottom:6px">🏷️ Kairu Etiquetas</h4>
+                    <div style="font-size:12px;color:var(--text2)">Gere e imprima etiquetas de validade térmicas em segundos com integração IA.</div>
+                </div>
+                <div class="card" onclick="api.openExternal('https://kairulabs.com/menu')" style="cursor:pointer;border-left:4px solid var(--blue);background:linear-gradient(135deg,rgba(90,200,250,0.05) 0%,var(--bg2) 100%)">
+                    <h4 style="font-size:14px;color:var(--blue);margin-bottom:6px">📱 Kairu Menu</h4>
+                    <div style="font-size:12px;color:var(--text2)">Cardápio digital ultrarrápido pelo WhatsApp. Sem taxas, direto pro PDV.</div>
+                </div>
+                <div class="card" onclick="api.openExternal('https://kairulabs.com/forms')" style="cursor:pointer;border-left:4px solid var(--green);background:linear-gradient(135deg,rgba(52,199,89,0.05) 0%,var(--bg2) 100%)">
+                    <h4 style="font-size:14px;color:var(--green);margin-bottom:6px">📋 Kairu Forms</h4>
+                    <div style="font-size:12px;color:var(--text2)">Formulários rápidos inteligentes para captar leads e feedback no salão.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHECKLISTS -->
+        <div class="page" id="pageChecklists" style="display:none">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+                <div>
+                    <div class="section-title">Checklists</div>
+                    <div class="section-sub" style="margin-bottom:0">Configure os checklists e horários de envio</div>
+                </div>
+                <button class="btn btn-primary" onclick="showNewChecklistModal()">+ Novo Checklist</button>
+            </div>
+            <div class="cards-grid" id="checklistsGrid"></div>
+        </div>
+
+        <!-- RESULTADOS -->
+        <div class="page" id="pageResultados" style="display:none">
+            <div class="section-title">Resultados</div>
+            <div class="section-sub">Preenchimentos e análises da IA</div>
+            <div id="resultadosList"></div>
+        </div>
+
+        <!-- ACESSO MOBILE -->
+        <div class="page" id="pageAcesso" style="display:none">
+            <div class="section-title">Acesso Mobile</div>
+            <div class="section-sub">Funcionários acessam o checklist pelo celular</div>
+            <div class="qr-section fade-in">
+                <div class="qr-box">
+                    <img id="qrImage" alt="QR Code" style="display:none">
+                    <div id="qrLoading" style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border2);border-radius:10px"><div class="spinner"></div></div>
+                    <div class="qr-url" id="qrUrl">Carregando...</div>
+                </div>
+                <div class="qr-info">
+                    <h3>Como funciona</h3>
+                    <p>O link é enviado automaticamente no WhatsApp nos horários agendados. Funcionários abrem no celular, preenchem e tiram fotos.</p>
+                    <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Configure horários</strong> — cada checklist tem seus horários de envio</div></div>
+                    <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Envio automático</strong> — o link chega no grupo do WhatsApp</div></div>
+                    <div class="step"><div class="step-num">3</div><div class="step-text"><strong>IA analisa</strong> — fotos e respostas são avaliadas automaticamente</div></div>
+                    <div class="step"><div class="step-num">4</div><div class="step-text"><strong>Feedback no grupo</strong> — resultado com nota volta pro WhatsApp</div></div>
+                    <div style="margin-top:16px;display:flex;gap:8px">
+                        <button class="btn btn-primary" onclick="enviarLinkGrupo()" id="btnEnviarLink">📱 Enviar Link Agora</button>
+                    </div>
+                    <div id="sendLinkResult" style="font-size:11px;margin-top:6px;min-height:16px"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOTOS -->
+        <div class="page" id="pageFotos" style="display:none">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+                <div>
+                    <div class="section-title">Galeria de Fotos</div>
+                    <div class="section-sub" style="margin-bottom:0">Fotos capturadas durante os checklists</div>
+                </div>
+                <button class="btn btn-ghost btn-sm" onclick="api.openFotosDir()">📂 Abrir Pasta</button>
+            </div>
+            <div class="fotos-grid" id="fotosGrid"></div>
+        </div>
+
+        <!-- IA CHAVES -->
+        <div class="page" id="pageIa" style="display:none">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+                <div>
+                    <div class="section-title">🤖 Chaves Inteligentes</div>
+                    <div class="section-sub" style="margin-bottom:0">Gerencie as chaves do Gemini para burlar limites por checklist</div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="openKeyModal()">+ Nova Chave</button>
+            </div>
+            <div class="cards-grid" id="aiKeysGrid"></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: NOVA CHAVE KEY -->
+<div class="modal-overlay" id="keyModal">
+    <div class="modal" style="max-width:400px">
+        <h2 id="keyModalTitle">Adicionar Chave Gemini</h2>
+        <div class="subtitle" style="margin-bottom:16px">Defina um apelido para reconhecer (ex: Conta do Gerente)</div>
+        <input type="hidden" id="keyEditId">
+        <label>Nome / Apelido</label><input id="keyNome" placeholder="Ex: Cadastro 1">
+        <label>Chave de API</label><input id="keyValor" type="password" placeholder="AIzaSy...">
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal('keyModal')">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveKeyForm()">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: FOTO -->
+<div class="foto-modal" id="fotoModal" onclick="this.classList.remove('active')"><img id="fotoModalImg"></div>
+
+<!-- MODAL: EDITAR CHECKLIST -->
+<div class="modal-overlay" id="checklistModal">
+    <div class="modal">
+        <h2 id="modalTitle">Novo Checklist</h2>
+        <div class="subtitle">Configure o checklist, itens e horários de envio</div>
+        <input type="hidden" id="editId">
+        <label>Nome</label><input id="clNome" placeholder="Ex: Checklist de Abertura">
+        <label>Descrição</label><input id="clDesc" placeholder="Verificação da cozinha na abertura">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div><label>Categoria</label><select id="clCategoria"><option value="operacional">Operacional</option><option value="higiene">Higiene</option><option value="seguranca">Segurança</option><option value="qualidade">Qualidade</option></select></div>
+            <div><label>Frequência</label><select id="clFreq"><option value="diario">Diário</option><option value="semanal">Semanal</option><option value="mensal">Mensal</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:end">
+            <div><label>Ícone</label><input id="clIcone" placeholder="📋" maxlength="4" style="width:60px"></div>
+            <div>
+                <label>Chave de IA (Correlação Exclusiva)</label>
+                <select id="clApiKeyId" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;color:var(--text);font-size:13px;outline:none"></select>
+            </div>
+        </div>
+
+        <h3 style="font-size:13px;font-weight:700;margin:14px 0 8px;color:var(--text2)">📋 Itens</h3>
+        <div id="itemsEditor"></div>
+        <button class="btn btn-ghost btn-sm" onclick="addItem()" style="margin-top:4px">+ Item</button>
+
+        <h3 style="font-size:13px;font-weight:700;margin:14px 0 6px;color:var(--text2)">⏰ Horários de Envio</h3>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Link enviado automaticamente no grupo do WhatsApp</div>
+        <div id="horariosEditor" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px"></div>
+        <div style="display:flex;gap:6px"><input type="time" id="novoHorario" style="background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:6px 10px;color:var(--text);font-size:12px;outline:none"><button class="btn btn-ghost btn-sm" onclick="addHorario()">+</button></div>
+
+        <h3 style="font-size:13px;font-weight:700;margin:14px 0 6px;color:var(--text2)">💬 Mensagem do WhatsApp</h3>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Use: <code>{link}</code> <code>{horario}</code> <code>{nome}</code>. Se ficar vazio, usaremos a mensagem padrão.</div>
+        <textarea id="clMensagemWA" rows="3" placeholder="📋 *{nome}* — {horario}
+
+Preencha o checklist:
+
+{link}
+
+📷 Tire fotos · 🤖 IA analisa"></textarea>
+
+
+
+        <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('checklistModal')">Cancelar</button><button class="btn btn-primary" onclick="saveChecklistForm()">Salvar</button></div>
+    </div>
+</div>
+
+<!-- MODAL: CONFIGURAÇÕES -->
+<div class="modal-overlay" id="configModal">
+    <div class="modal">
+        <h2>⚙️ Configurações</h2>
+        <div class="subtitle">IA, WhatsApp e dados da empresa</div>
+        <div class="tabs">
+            <div class="tab active" onclick="switchConfigTab('whatsapp',this)">📱 WhatsApp</div>
+            <div class="tab" onclick="switchConfigTab('empresa',this)">🏢 Empresa</div>
+        </div>
+        <div id="configTabWhatsApp">
+            <div class="wa-config">
+                <div id="waStatusIcon" style="font-size:28px">📱</div>
+                <div id="waStatusText" style="font-size:13px;font-weight:700;margin:4px 0">Desconectado</div>
+                <div id="waStatusSub" style="font-size:11px;color:var(--text3)">Conecte para enviar checklists</div>
+                <div class="wa-qr" id="waQRArea"><img id="waQRImage"><div style="font-size:10px;color:var(--text3);margin-top:6px">WhatsApp → Dispositivos Vinculados → Vincular</div></div>
+                <div style="margin-top:10px;display:flex;gap:6px;justify-content:center">
+                    <button class="btn btn-primary btn-sm" onclick="waConnect()" id="btnWAConnect">🔗 Conectar</button>
+                    <button class="btn btn-danger btn-sm" onclick="waDisconnect()" id="btnWADisconnect" style="display:none">⛔ Desconectar</button>
+                </div>
+            </div>
+            <div id="waGroupArea" style="display:none;margin-top:12px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                    <label style="margin:0">Grupo de Checklist</label>
+                    <button class="btn btn-ghost btn-sm" onclick="waListGroups()">🔄 Atualizar</button>
+                </div>
+                <select id="cfgGrupo" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;color:var(--text);font-size:13px;margin-bottom:4px;outline:none"><option value="">Clique Atualizar para carregar</option></select>
+                <div style="font-size:10px;color:var(--text3)" id="grupoSelecionado">Nenhum grupo selecionado</div>
+            </div>
+        </div>
+        <div id="configTabEmpresa" style="display:none">
+            <label>Restaurante</label><input id="cfgEmpresa"><label>Tipo de Cozinha</label><input id="cfgTipoCozinha">
+        </div>
+        <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('configModal')">Cancelar</button><button class="btn btn-primary" onclick="saveConfigForm()">Salvar</button></div>
+    </div>
+</div>
+
+<!-- MODAL: PRÉ-CADASTRO -->
+<div class="modal-overlay" id="registrationModal">
+    <div class="modal">
+        <h2>👋 Bem-vindo ao Checklist</h2>
+        <div class="subtitle">Nos conte sobre seu negócio antes de começar</div>
+        <label>Nome do estabelecimento</label><input id="regNome" placeholder="Ex: Hamburgueria Top">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div><label>Cidade</label><input id="regCidade" placeholder="São Paulo"></div>
+            <div><label>Estado</label><input id="regEstado" placeholder="SP" maxlength="2" style="text-transform:uppercase"></div>
+        </div>
+        <label>Tipo de cozinha</label>
+        <select id="regTipo"><option value="">Selecione...</option><option value="hamburgueria">Hamburgueria</option><option value="pizzaria">Pizzaria</option><option value="restaurante">Restaurante</option><option value="lanchonete">Lanchonete</option><option value="japonesa">Japonesa/Sushi</option><option value="acaiteria">Açaiteria</option><option value="padaria">Padaria</option><option value="marmitaria">Marmitaria</option><option value="outro">Outro</option></select>
+        <div class="checkbox-row"><input type="checkbox" id="regTermos"><span>Aceito os <strong>Termos de Uso</strong> e autorizo coleta de dados anonimizados para melhoria.</span></div>
+        <div class="modal-actions"><button class="btn btn-primary" onclick="salvarRegistro()">Começar</button></div>
+    </div>
+</div>
+
+<!-- MODAL: LICENÇA -->
+<div class="modal-overlay" id="licenseModal">
+    <div class="modal">
+        <h2>🔑 Licença Pro</h2>
+        <div class="subtitle">Remova anúncios e desbloqueie exportações</div>
+        <label>Chave</label><input id="licenseKey" placeholder="KA-XXXX-XXXX" style="font-family:var(--mono);text-transform:uppercase;text-align:center;font-size:15px;letter-spacing:2px">
+        <div id="licenseMsg" style="font-size:11px;margin-bottom:8px;min-height:14px"></div>
+        <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('licenseModal')">Cancelar</button><button class="btn btn-primary" onclick="ativarLicenca()">Ativar</button></div>
+    </div>
+</div>
+
+<!-- MODAL: VERSION BLOCK -->
+<div class="modal-overlay" id="versionBlockModal" style="background:rgba(0,0,0,0.9);z-index:9999">
+    <div class="modal" style="text-align:center">
+        <div style="font-size:50px;margin-bottom:16px">⚠️</div>
+        <h2 style="color:var(--red)">App Desatualizado</h2>
+        <div class="subtitle" style="color:var(--text2);font-size:14px" id="lblVersionBlockMsg">Esta versão do Kairu não é mais suportada.</div>
+        <div class="modal-actions"><button class="btn btn-primary" style="background:var(--red)" onclick="api.openExternal(window.__versionStatus?.downloadUrl || 'https://kairulabs.com')">Baixar Nova Atualização</button></div>
+    </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  KAIRU CHECKLIST — Frontend
+// ══════════════════════════════════════════
+let checklists=[],editItems=[],editHorarios=[]
+
+async function initApp(){
+    checklists=await api.getChecklists()
+    document.getElementById('navCl').textContent=checklists.length
+    renderQR()
+    loadDashboard()
+    loadChecklists()
+    loadResultados()
+    loadFotos()
+    loadIAKeys()
+    // Checar status WA
+    const st=await api.waStatus()
+    updateWABadge(st.status)
+}
+
+// ─── NAVEGAÇÃO ───
+function switchPage(id,el){
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));el.classList.add('active')
+    document.querySelectorAll('.page').forEach(p=>{p.style.display='none';p.classList.remove('active')})
+    const page=document.getElementById('page'+id.charAt(0).toUpperCase()+id.slice(1))
+    if(page){page.style.display='block';page.classList.add('active')}
+    if(id==='resultados')loadResultados()
+    if(id==='fotos')loadFotos()
+}
+
+// ─── QR CODE ───
+async function renderQR(){
+    try{
+        const qr=await api.generateQRCode()
+        document.getElementById('qrUrl').textContent=qr.url
+        const img=document.getElementById('qrImage')
+        img.src=qr.dataUrl
+        img.style.display='block'
+        document.getElementById('qrLoading').style.display='none'
+    }catch(e){
+        console.error('QR Error:',e)
+        document.getElementById('qrUrl').textContent='Erro ao gerar QR'
+        document.getElementById('qrLoading').innerHTML='<span style="color:var(--red);font-size:12px">⚠️ Erro</span>'
+    }
+}
+
+// ─── DASHBOARD ───
+async function loadDashboard(){
+    const all=[]
+    for(const cl of checklists){const p=await api.getPreenchimentos(cl.id);all.push(...p.map(x=>({...x,checklistNome:cl.nome,checklistIcone:cl.icone})))}
+    all.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))
+
+    const hoje=all.filter(p=>new Date(p.createdAt).toDateString()===new Date().toDateString())
+    const avgScore=all.filter(p=>p.score).reduce((s,p,_,a)=>s+p.score/a.length,0)
+
+    document.getElementById('dashKpis').innerHTML=`
+        <div class="kpi"><div class="kpi-label">Checklists</div><div class="kpi-value blue">${checklists.length}</div></div>
+        <div class="kpi"><div class="kpi-label">Hoje</div><div class="kpi-value green">${hoje.length}</div></div>
+        <div class="kpi"><div class="kpi-label">Total</div><div class="kpi-value">${all.length}</div></div>
+        <div class="kpi"><div class="kpi-label">Nota Média</div><div class="kpi-value ${avgScore>=7?'green':avgScore>=4?'orange':'red'}">${avgScore?avgScore.toFixed(1):'—'}</div></div>
+    `
+
+    // Próximos envios
+    const now=new Date()
+    const schedules=[]
+    checklists.forEach(cl=>{
+        (cl.horarios||[]).forEach(h=>{
+            const [hh,mm]=h.split(':').map(Number)
+            const next=new Date();next.setHours(hh,mm,0,0)
+            if(next<now)next.setDate(next.getDate()+1)
+            schedules.push({nome:cl.nome,icone:cl.icone,horario:h,next})
+        })
+    })
+    schedules.sort((a,b)=>a.next-b.next)
+    document.getElementById('dashSchedule').innerHTML=schedules.length?schedules.slice(0,5).map(s=>
+        `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span>${s.icone||'📋'}</span>
+            <span style="flex:1;font-size:12px">${s.nome}</span>
+            <span style="font-family:var(--mono);font-size:12px;color:var(--blue);font-weight:600">${s.horario}</span>
+        </div>`
+    ).join(''):'<div class="empty"><div class="icon">⏰</div><div>Nenhum horário agendado</div></div>'
+
+    // Últimos preenchimentos
+    document.getElementById('dashRecent').innerHTML=all.length?all.slice(0,5).map(p=>{
+        const d=new Date(p.createdAt);const emoji=p.score>=8?'🟢':p.score>=5?'🟡':p.score?'🔴':'⏳'
+        return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+            <span>${emoji}</span>
+            <span style="flex:1;font-size:12px">${p.checklistNome||'Checklist'}</span>
+            <span style="font-size:11px;color:var(--text3)">${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>
+            ${p.score?`<span style="font-weight:800;font-size:13px;color:${p.score>=7?'var(--green)':'var(--orange)'}">${p.score}</span>`:''}
+        </div>`
+    }).join(''):'<div class="empty"><div class="icon">📊</div><div>Nenhum preenchimento ainda</div></div>'
+}
+
+// ─── CHECKLISTS ───
+function loadChecklists(){
+    document.getElementById('navCl').textContent=checklists.length
+    const grid=document.getElementById('checklistsGrid')
+    if(!checklists.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="icon">📋</div><div class="title">Nenhum checklist</div><div>Crie seu primeiro checklist clicando no botão acima.</div></div>';return}
+    const ip=window.__localIP||'127.0.0.1',port=window.__webPort||3334
+    grid.innerHTML=checklists.map(cl=>{
+        const link=`http://${ip}:${port}/?id=${cl.id}`
+        return`<div class="card cl-card" onclick="editChecklist('${cl.id}')">
+            <div class="cl-header"><span class="cl-icon">${cl.icone||'📋'}</span><span class="cl-name">${cl.nome}</span></div>
+            <div class="cl-desc">${cl.descricao||'Sem descrição'}</div>
+            <div class="cl-tags">
+                <span class="tag">${cl.items?.length||0} itens</span>
+                <span class="tag">${cl.categoria||'operacional'}</span>
+                ${cl.systemPrompt?'<span class="tag" style="color:var(--green)">✓ IA</span>':''}
+            </div>
+            ${cl.horarios?.length?`<div class="cl-schedule">⏰ ${cl.horarios.join(' · ')}</div>`:''}
+            <div style="display:flex;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)" onclick="event.stopPropagation()">
+                <button class="btn btn-ghost btn-sm" onclick="copyLink('${link}')" title="Copiar link">📋 Link</button>
+                <button class="btn btn-ghost btn-sm" onclick="sendWALink('${cl.id}','${cl.nome}')" title="Enviar no WhatsApp">📱 WA</button>
+                <button class="btn btn-ghost btn-sm" onclick="deleteChecklist('${cl.id}','${cl.nome}')" title="Apagar" style="margin-left:auto;color:var(--red)">🗑️</button>
+            </div>
+        </div>`
+    }).join('')
+}
+function copyLink(url){navigator.clipboard.writeText(url);alert('✅ Link copiado: '+url)}
+async function sendWALink(clId,clName){
+    try{await api.waSendLink(clId);alert('✅ Link de "'+clName+'" enviado no WhatsApp!')}catch(e){alert('⚠️ '+e.message)}
+}
+async function deleteChecklist(id,nome){
+    if(!confirm('Apagar "'+nome+'"? Essa ação é irreversível.'))return
+    await api.deleteChecklist(id);checklists=await api.getChecklists();loadChecklists();loadDashboard()
+}
+
+// ─── RESULTADOS ───
+async function loadResultados(){
+    const all=[]
+    for(const cl of checklists){const p=await api.getPreenchimentos(cl.id);all.push(...p.map(x=>({...x,checklistNome:cl.nome,checklistIcone:cl.icone})))}
+    all.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))
+
+    // Tranca do PRO: Histórico reduzido a 7 Dias no FREE
+    let exibidos = all;
+    if (!window.__isPro) {
+        const d = new Date()
+        d.setDate(d.getDate() - 7)
+        exibidos = all.filter(p => new Date(p.createdAt) >= d)
+    }
+
+    document.getElementById('navRes').textContent=exibidos.length
+    const el=document.getElementById('resultadosList')
+    if(!exibidos.length){el.innerHTML='<div class="empty"><div class="icon">📈</div><div class="title">Nenhum resultado</div><div>Os resultados dos preenchimentos aparecerão aqui.</div></div>';return}
+    let html = exibidos.map(p=>{
+        const d=new Date(p.createdAt);const emoji=p.score>=8?'🟢':p.score>=5?'🟡':p.score?'🔴':'⏳'
+        const feedbackHtml=p.feedback?p.feedback.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>'):''
+        return`<div class="result-item fade-in" onclick="this.classList.toggle('expanded')">
+            <div class="result-header">
+                <div class="result-title">${p.checklistIcone||'📋'} ${p.checklistNome}</div>
+                <div class="result-score" style="color:${p.score>=7?'var(--green)':p.score>=4?'var(--orange)':'var(--red)'}">${p.score?emoji+' '+p.score+'/10':'⏳ Sem nota'}</div>
+            </div>
+            <div class="result-meta">
+                <span>👤 ${p.preenchidoPor||'Anônimo'}</span>
+                <span>📅 ${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>
+                ${p.fotos?.length?`<span>📷 ${p.fotos.length} foto(s)</span>`:''}
+                ${p.whatsappEnviado?'<span style="color:var(--green)">✓ WA</span>':''}
+                <span style="color:var(--text3);margin-left:auto">${p.feedback?'▼ Clique para ver':'⏳ Aguardando IA'}</span>
+            </div>
+            <div class="result-body">
+                ${feedbackHtml?`<div class="result-feedback">${feedbackHtml}</div>`:''}
+                <div class="result-actions" onclick="event.stopPropagation()">
+                    <button class="btn btn-ghost btn-sm" onclick="reAnalyze('${p.id}')">🤖 Re-analisar</button>
+                    <button class="btn btn-ghost btn-sm" onclick="sendResultWA('${p.id}')">📱 Enviar no WA</button>
+                </div>
+            </div>
+        </div>`
+    }).join('')
+
+    // Botão vendedor da Licença PRO se tiver registros cortados
+    if (!window.__isPro && all.length > exibidos.length) {
+        html += `<div style="text-align:center;padding:16px;cursor:pointer;background:var(--card);border-radius:12px;margin-top:10px;border:1px dashed var(--orange)" onclick="showLicenseModal()"><span style="color:var(--orange);font-weight:700">🔒 Existem mais ${all.length - exibidos.length} relatórios ocultos. Desbloqueie o Histórico Completo com a Licença PRO.</span></div>`
+    }
+    el.innerHTML = html;
+}
+
+async function reAnalyze(id){
+    try{const r=await api.analyzeChecklist(id);alert('✅ Nota: '+r.score+'/10');loadResultados();loadDashboard()}catch(e){alert('⚠️ '+e.message)}
+}
+async function sendResultWA(id){
+    try{await api.waSendResult(id);alert('✅ Feedback enviado no WhatsApp!');loadResultados()}catch(e){alert('⚠️ '+e.message)}
+}
+
+// ─── FOTOS ───
+async function loadFotos(){
+    const fotos=await api.getFotos()
+    document.getElementById('navFotos').textContent=fotos.length
+    const grid=document.getElementById('fotosGrid')
+    if(!fotos.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="icon">📷</div><div class="title">Nenhuma foto</div><div>Fotos capturadas nos checklists aparecem aqui.</div></div>';return}
+    grid.innerHTML=fotos.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(f=>
+        `<div class="foto-thumb" onclick="document.getElementById('fotoModalImg').src='${f.url}';document.getElementById('fotoModal').classList.add('active')"><img src="${f.url}" loading="lazy"></div>`
+    ).join('')
+}
+
+// ─── EDITOR ───
+function showNewChecklistModal(){
+    document.getElementById('modalTitle').textContent='Novo Checklist';document.getElementById('editId').value=''
+    document.getElementById('clNome').value='';document.getElementById('clDesc').value='';document.getElementById('clIcone').value='📋';document.getElementById('clApiKeyId').value=''
+    editItems=[];editHorarios=[];renderItemsEditor();renderHorariosEditor();openModal('checklistModal')
+}
+function editChecklist(id){
+    const cl=checklists.find(c=>c.id===id);if(!cl)return
+    document.getElementById('modalTitle').textContent='Editar: '+cl.nome;document.getElementById('editId').value=cl.id
+    document.getElementById('clNome').value=cl.nome||'';document.getElementById('clDesc').value=cl.descricao||''
+    document.getElementById('clCategoria').value=cl.categoria||'operacional';document.getElementById('clFreq').value=cl.frequencia||'diario'
+    document.getElementById('clIcone').value=cl.icone||'📋';document.getElementById('clApiKeyId').value=cl.apiKeyId||''
+    document.getElementById('clMensagemWA').value=cl.mensagemWA||''
+    editItems=JSON.parse(JSON.stringify(cl.items||[]));editHorarios=[...(cl.horarios||[])]
+    renderItemsEditor();renderHorariosEditor();openModal('checklistModal')
+}
+function renderItemsEditor(){
+    document.getElementById('itemsEditor').innerHTML=editItems.map((it,i)=>{
+        const isFoto = it.tipo === 'foto'
+        return `<div style="margin-bottom:8px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px">
+            <div style="display:flex;gap:4px;align-items:center">
+                <input value="${it.texto}" onchange="editItems[${i}].texto=this.value" placeholder="Item..." style="flex:1;background:transparent;border:none;color:var(--text);font-size:13px;outline:none;font-family:var(--fb)">
+                <select onchange="editItems[${i}].tipo=this.value;renderItemsEditor()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:5px;color:var(--text);font-size:10px;outline:none;width:80px">
+                    <option value="checkbox" ${it.tipo==='checkbox'?'selected':''}>Sim/Não</option><option value="foto" ${it.tipo==='foto'?'selected':''}>📷 Foto</option><option value="texto" ${it.tipo==='texto'?'selected':''}>Texto</option><option value="numero" ${it.tipo==='numero'?'selected':''}>Número</option><option value="temperatura" ${it.tipo==='temperatura'?'selected':''}>Temp</option>
+                </select>
+                <button onclick="editItems.splice(${i},1);renderItemsEditor()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px">✕</button>
+            </div>
+            ${isFoto ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+                <div style="font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:1px;font-weight:500;margin-bottom:4px">🤖 Prompt da IA para esta foto</div>
+                <textarea onchange="editItems[${i}].prompt=this.value" placeholder="Ex: Analise se a câmara fria está organizada, sem produtos vencidos..." style="width:100%;background:transparent;border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text2);font-size:11px;outline:none;resize:vertical;min-height:40px;font-family:var(--fb)">${it.prompt||''}</textarea>
+            </div>` : ''}
+        </div>`
+    }).join('')
+}
+function addItem(){editItems.push({id:'item_'+Date.now(),texto:'',tipo:'checkbox',obrigatorio:false});renderItemsEditor()}
+
+function renderHorariosEditor(){
+    const el=document.getElementById('horariosEditor')
+    el.innerHTML=editHorarios.length?editHorarios.map((h,i)=>
+        `<div style="display:flex;align-items:center;gap:3px;background:rgba(90,200,250,.1);border:1px solid rgba(90,200,250,.2);border-radius:6px;padding:3px 8px">
+            <span style="font-size:12px;font-weight:600;color:var(--blue)">${h}</span>
+            <button onclick="editHorarios.splice(${i},1);renderHorariosEditor()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:10px">✕</button>
+        </div>`
+    ).join(''):'<div style="font-size:11px;color:var(--text3)">Nenhum horário</div>'
+}
+function addHorario(){const input=document.getElementById('novoHorario');if(!input.value)return;if(!editHorarios.includes(input.value)){editHorarios.push(input.value);editHorarios.sort()};input.value='';renderHorariosEditor()}
+
+async function saveChecklistForm(){
+    const id=document.getElementById('editId').value
+    const data={id:id||undefined,nome:document.getElementById('clNome').value,descricao:document.getElementById('clDesc').value,
+        categoria:document.getElementById('clCategoria').value,frequencia:document.getElementById('clFreq').value,
+        icone:document.getElementById('clIcone').value||'📋',apiKeyId:document.getElementById('clApiKeyId').value,
+        items:editItems.filter(it=>it.texto.trim()),
+        horarios:editHorarios,mensagemWA:document.getElementById('clMensagemWA').value}
+    if(!data.nome){alert('Nome é obrigatório');return}
+    await api.saveChecklist(data);closeModal('checklistModal');checklists=await api.getChecklists();loadChecklists();loadDashboard();loadIAKeys()
+}
+
+
+// ─── CONFIG ───
+async function showConfig(){
+    const cfg=await api.loadConfig()
+    document.getElementById('cfgEmpresa').value=cfg.nomeEmpresa||''
+    document.getElementById('cfgTipoCozinha').value=cfg.tipoCozinha||''
+    if(cfg.whatsappGrupoNome){
+        document.getElementById('grupoSelecionado').innerHTML=`✅ <strong>${cfg.whatsappGrupoNome}</strong>`
+        document.getElementById('cfgGrupo').innerHTML=`<option value="${cfg.whatsappGrupoId}">${cfg.whatsappGrupoNome}</option>`
+    }
+    const st=await api.waStatus();updateWAUI(st.status)
+    openModal('configModal')
+}
+function switchConfigTab(tab,el){
+    document.querySelectorAll('#configModal .tab').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active')
+    document.getElementById('configTabWhatsApp').style.display=tab==='whatsapp'?'block':'none'
+    document.getElementById('configTabEmpresa').style.display=tab==='empresa'?'block':'none'
+}
+async function saveConfigForm(){
+    const cfg=await api.loadConfig()
+    cfg.nomeEmpresa=document.getElementById('cfgEmpresa').value;cfg.tipoCozinha=document.getElementById('cfgTipoCozinha').value
+    const g=document.getElementById('cfgGrupo');if(g.value){cfg.whatsappGrupoId=g.value;cfg.whatsappGrupoNome=g.options[g.selectedIndex]?.text||''}
+    await api.saveConfig(cfg);closeModal('configModal')
+}
+
+async function loadIAKeys(){
+    const cfg=await api.loadConfig()
+    const keys=cfg.aiKeys||[]
+    const sel=document.getElementById('clApiKeyId')
+    sel.innerHTML='<option value="">Automático (Aleatório do Pool Global)</option>'+keys.map(k=>`<option value="${k.id}">${k.nome}</option>`).join('')
+    const grid=document.getElementById('aiKeysGrid')
+    if(!keys.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="icon">🔑</div><div class="title">Nenhuma chave cadastrada</div><div>Crie chaves do Gemini para distribuir o limite.</div></div>';return}
+    grid.innerHTML=keys.map(k=>{
+        const cls=checklists.filter(c=>c.apiKeyId===k.id).length
+        return`<div class="card">
+            <h3 style="font-size:16px;font-weight:700;margin-bottom:6px">${k.nome}</h3>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:12px">${k.key.substring(0,8)}...${k.key.slice(-4)}</div>
+            <div class="kpi-sub" style="margin-bottom:12px;color:var(--blue)">Vinculado a ${cls} checklists</div>
+            <button class="btn btn-danger btn-sm" onclick="delKey('${k.id}')">Excluir</button>
+        </div>`
+    }).join('')
+}
+function openKeyModal(){
+    if (!window.__isPro) {
+        showLicenseModal();
+        document.getElementById('licenseMsg').style.color = 'var(--orange)';
+        document.getElementById('licenseMsg').textContent = '🤖 Cadastrar Chave de Inteligência isolada é um recurso exclusivo do Plano PRO.';
+        return;
+    }
+    document.getElementById('keyEditId').value=''
+    document.getElementById('keyNome').value=''
+    document.getElementById('keyValor').value=''
+    openModal('keyModal')
+}
+async function saveKeyForm(){
+    const nome=document.getElementById('keyNome').value.trim()
+    const valor=document.getElementById('keyValor').value.trim()
+    if(!nome||!valor)return alert('Preencha os campos')
+    const cfg=await api.loadConfig()
+    if(!cfg.aiKeys)cfg.aiKeys=[]
+    cfg.aiKeys.push({id:'k_'+Date.now(),nome,key:valor})
+    await api.saveConfig(cfg)
+    closeModal('keyModal')
+    loadIAKeys()
+}
+async function delKey(id){
+    if(!confirm('Excluir esta chave? Checklists associados voltarão para o Automático.'))return
+    const cfg=await api.loadConfig()
+    cfg.aiKeys=(cfg.aiKeys||[]).filter(k=>k.id!==id)
+    await api.saveConfig(cfg)
+    let changed=false
+    for(const c of checklists){
+        if(c.apiKeyId===id){c.apiKeyId='';await api.saveChecklist(c);changed=true}
+    }
+    if(changed){checklists=await api.getChecklists();loadChecklists()}
+    loadIAKeys()
+}
+
+// ─── WHATSAPP ───
+function updateWABadge(status){
+    const badge=document.getElementById('waHeaderBadge')
+    if(status==='connected'){badge.className='badge badge-wa connected';badge.textContent='✅ WhatsApp'}
+    else{badge.className='badge badge-wa disconnected';badge.textContent='📱 WhatsApp Desconectado'}
+}
+function updateWAUI(status){
+    const icon=document.getElementById('waStatusIcon'),text=document.getElementById('waStatusText'),sub=document.getElementById('waStatusSub')
+    const btnC=document.getElementById('btnWAConnect'),btnD=document.getElementById('btnWADisconnect')
+    const qr=document.getElementById('waQRArea'),grp=document.getElementById('waGroupArea')
+    updateWABadge(status)
+    switch(status){
+        case'connected':icon.textContent='✅';text.textContent='Conectado';text.style.color='var(--green)';sub.textContent='Pronto para enviar';btnC.style.display='none';btnD.style.display='inline-flex';qr.style.display='none';grp.style.display='block';break
+        case'qr':icon.textContent='📲';text.textContent='Escaneie o QR';text.style.color='var(--orange)';sub.textContent='Abra WhatsApp → Vincular Dispositivo';btnC.style.display='none';btnD.style.display='none';qr.style.display='block';grp.style.display='none';break
+        case'connecting':icon.textContent='⏳';text.textContent='Conectando...';text.style.color='var(--text2)';sub.textContent='Aguarde';btnC.style.display='none';btnD.style.display='none';qr.style.display='none';grp.style.display='none';break
+        default:icon.textContent='📱';text.textContent='Desconectado';text.style.color='var(--text)';sub.textContent='Conecte para enviar checklists';btnC.style.display='inline-flex';btnD.style.display='none';qr.style.display='none';grp.style.display='none'
+    }
+}
+function onWAStatus(s){updateWAUI(s)}
+function onWAQR(d){document.getElementById('waQRImage').src=d;document.getElementById('waQRArea').style.display='block'}
+async function waConnect(){updateWAUI('connecting');try{await api.waConnect()}catch(e){alert(e.message);updateWAUI('disconnected')}}
+async function waDisconnect(){try{await api.waDisconnect()}catch(e){};updateWAUI('disconnected')}
+async function waListGroups(){
+    try{const g=await api.waListGroups();const s=document.getElementById('cfgGrupo');s.innerHTML='<option value="">Selecione o grupo...</option>';g.forEach(x=>{const o=document.createElement('option');o.value=x.id;o.text=`${x.nome} (${x.participantes})`;s.add(o)});const c=await api.loadConfig();if(c.whatsappGrupoId)s.value=c.whatsappGrupoId}catch(e){alert(e.message)}
+}
+async function enviarLinkGrupo(){
+    const btn=document.getElementById('btnEnviarLink'),r=document.getElementById('sendLinkResult')
+    btn.disabled=true;btn.textContent='⏳ Enviando...'
+    try{await api.waSendLink();r.innerHTML='<span style="color:var(--green)">✅ Link enviado!</span>'}catch(e){r.innerHTML=`<span style="color:var(--red)">⚠️ ${e.message}</span>`}
+    btn.disabled=false;btn.textContent='📱 Enviar Link Agora'
+}
+function onScheduledSend(nome,h){
+    // Notificação visual de envio agendado
+    const dash=document.getElementById('dashRecent')
+    const div=document.createElement('div');div.style.cssText='padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--green)'
+    div.textContent=`⏰ ${h} — "${nome}" enviado automaticamente`;dash.prepend(div)
+}
+
+// ─── MODAIS ───
+function openModal(id){document.getElementById(id).classList.add('active')}
+function closeModal(id){document.getElementById(id).classList.remove('active')}
+
+// ─── LICENÇA / REGISTRO / BANNER ───
+function showLicenseModal(){openModal('licenseModal');document.getElementById('licenseMsg').textContent=''}
+async function ativarLicenca(){const k=document.getElementById('licenseKey').value.trim().toUpperCase();if(!k)return;const m=document.getElementById('licenseMsg');m.style.color='var(--text2)';m.textContent='Validando...';const r=await api.validateLicense(k);if(r.valid){m.style.color='var(--green)';m.textContent='✓ Ativada!';window.__isPro=true;document.getElementById('kairuBanner').classList.remove('active')}else{m.style.color='var(--red)';m.textContent='✗ '+(r.error||'Inválida')}}
+function showRegistrationModal(){openModal('registrationModal')}
+async function salvarRegistro(){if(!document.getElementById('regTermos').checked){alert('Aceite os termos.');return};await api.saveRegistration({nomeEmpresa:document.getElementById('regNome').value,cidade:document.getElementById('regCidade').value,estado:document.getElementById('regEstado').value.toUpperCase(),tipoCozinha:document.getElementById('regTipo').value});closeModal('registrationModal')}
+function showKairuBanner(){
+    if(window.__isPro)return;
+    let b=window.__kairuBanner;
+    if(!b || !b.active){
+        b = { active: true, bgColor: 'linear-gradient(90deg, #ff6b00 0%, #ff8a33 100%)', textColor: '#fff', html: 'Conheça o <strong>Kairu Etiquetas</strong>: Imprima etiquetas de validade térmicas em 3s direto do celular →' }
+    }
+    const el=document.getElementById('kairuBanner'),inner=document.getElementById('kairuBannerInner');
+    inner.style.background=b.bgColor;inner.style.color=b.textColor;inner.innerHTML=b.html;
+    el.classList.add('active');if(b.bannerId)api.trackBanner(b.bannerId,'impression')
+}
+function handleBannerClick(){
+    const b=window.__kairuBanner;
+    if(b && b.bannerId) api.trackBanner(b.bannerId,'click');
+    api.openExternal('https://kairulabs.com/etiquetas');
+}
+function showVersionBlock(){
+    document.getElementById('versionBlockModal').classList.add('active');
+    if(window.__versionStatus?.reason) document.getElementById('lblVersionBlockMsg').textContent = window.__versionStatus.reason;
+}
+</script>
+<script src="onboarding.js"></script>
+</body>
+</html>
