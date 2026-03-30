@@ -40,7 +40,7 @@
       "target": [
         "nsis"
       ],
-      "icon": "assets/icon.png"
+      "icon": "assets/icon.ico"
     },
     "nsis": {
       "oneClick": true,
@@ -52,7 +52,7 @@
       "target": [
         "dmg"
       ],
-      "icon": "assets/icon.png",
+      "icon": "assets/icon.ico",
       "category": "public.app-category.business"
     }
   },

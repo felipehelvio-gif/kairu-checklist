@@ -178,7 +178,7 @@ class WhatsAppManager {
     /**
      * Enviar resultado/feedback para o grupo.
      */
-    async sendFeedback(groupId, checklistNome, preenchidoPor, feedback, score, isPro = false) {
+    async sendFeedback(groupId, checklistNome, preenchidoPor, feedback, score) {
         if (!groupId) throw new Error("Grupo não selecionado")
 
         const now = new Date()
@@ -196,9 +196,7 @@ class WhatsAppManager {
         msg += `\n────────────────────\n\n`
         msg += feedback
         msg += `\n\n────────────────────`
-        if (!isPro) {
-            msg += `\n_Kairu Checklist · Análise por IA_`
-        }
+        msg += `\n_Kairu Checklist · Análise por IA_`
 
         return this.sendMessage(groupId, msg)
     }

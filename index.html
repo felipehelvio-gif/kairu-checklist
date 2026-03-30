@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kairu Checklist</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/fonts/fonts.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -220,7 +220,6 @@
     </div>
     <div class="header-right">
         <div class="badge badge-wa disconnected" id="waHeaderBadge" onclick="showConfig();switchConfigTab('whatsapp',document.querySelectorAll('.tab')[1])">📱 WhatsApp Desconectado</div>
-        <button class="btn btn-ghost btn-sm" onclick="showLicenseModal()">🔑</button>
     </div>
 </header>
 
@@ -473,26 +472,9 @@ Preencha o checklist:
     </div>
 </div>
 
-<!-- MODAL: LICENÇA -->
-<div class="modal-overlay" id="licenseModal">
-    <div class="modal">
-        <h2>🔑 Licença Pro</h2>
-        <div class="subtitle">Remova anúncios e desbloqueie exportações</div>
-        <label>Chave</label><input id="licenseKey" placeholder="KA-XXXX-XXXX" style="font-family:var(--mono);text-transform:uppercase;text-align:center;font-size:15px;letter-spacing:2px">
-        <div id="licenseMsg" style="font-size:11px;margin-bottom:8px;min-height:14px"></div>
-        <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('licenseModal')">Cancelar</button><button class="btn btn-primary" onclick="ativarLicenca()">Ativar</button></div>
-    </div>
-</div>
 
-<!-- MODAL: VERSION BLOCK -->
-<div class="modal-overlay" id="versionBlockModal" style="background:rgba(0,0,0,0.9);z-index:9999">
-    <div class="modal" style="text-align:center">
-        <div style="font-size:50px;margin-bottom:16px">⚠️</div>
-        <h2 style="color:var(--red)">App Desatualizado</h2>
-        <div class="subtitle" style="color:var(--text2);font-size:14px" id="lblVersionBlockMsg">Esta versão do Kairu não é mais suportada.</div>
-        <div class="modal-actions"><button class="btn btn-primary" style="background:var(--red)" onclick="api.openExternal(window.__versionStatus?.downloadUrl || 'https://kairulabs.com')">Baixar Nova Atualização</button></div>
-    </div>
-</div>
+
+
 
 <script>
 // ══════════════════════════════════════════
@@ -628,13 +610,8 @@ async function loadResultados(){
     for(const cl of checklists){const p=await api.getPreenchimentos(cl.id);all.push(...p.map(x=>({...x,checklistNome:cl.nome,checklistIcone:cl.icone})))}
     all.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))
 
-    // Tranca do PRO: Histórico reduzido a 7 Dias no FREE
+    // Histórico completo — 100% liberado
     let exibidos = all;
-    if (!window.__isPro) {
-        const d = new Date()
-        d.setDate(d.getDate() - 7)
-        exibidos = all.filter(p => new Date(p.createdAt) >= d)
-    }
 
     document.getElementById('navRes').textContent=exibidos.length
     const el=document.getElementById('resultadosList')
@@ -664,10 +641,6 @@ async function loadResultados(){
         </div>`
     }).join('')
 
-    // Botão vendedor da Licença PRO se tiver registros cortados
-    if (!window.__isPro && all.length > exibidos.length) {
-        html += `<div style="text-align:center;padding:16px;cursor:pointer;background:var(--card);border-radius:12px;margin-top:10px;border:1px dashed var(--orange)" onclick="showLicenseModal()"><span style="color:var(--orange);font-weight:700">🔒 Existem mais ${all.length - exibidos.length} relatórios ocultos. Desbloqueie o Histórico Completo com a Licença PRO.</span></div>`
-    }
     el.innerHTML = html;
 }
 
@@ -790,12 +763,6 @@ async function loadIAKeys(){
     }).join('')
 }
 function openKeyModal(){
-    if (!window.__isPro) {
-        showLicenseModal();
-        document.getElementById('licenseMsg').style.color = 'var(--orange)';
-        document.getElementById('licenseMsg').textContent = '🤖 Cadastrar Chave de Inteligência isolada é um recurso exclusivo do Plano PRO.';
-        return;
-    }
     document.getElementById('keyEditId').value=''
     document.getElementById('keyNome').value=''
     document.getElementById('keyValor').value=''
@@ -867,13 +834,10 @@ function onScheduledSend(nome,h){
 function openModal(id){document.getElementById(id).classList.add('active')}
 function closeModal(id){document.getElementById(id).classList.remove('active')}
 
-// ─── LICENÇA / REGISTRO / BANNER ───
-function showLicenseModal(){openModal('licenseModal');document.getElementById('licenseMsg').textContent=''}
-async function ativarLicenca(){const k=document.getElementById('licenseKey').value.trim().toUpperCase();if(!k)return;const m=document.getElementById('licenseMsg');m.style.color='var(--text2)';m.textContent='Validando...';const r=await api.validateLicense(k);if(r.valid){m.style.color='var(--green)';m.textContent='✓ Ativada!';window.__isPro=true;document.getElementById('kairuBanner').classList.remove('active')}else{m.style.color='var(--red)';m.textContent='✗ '+(r.error||'Inválida')}}
+// ─── REGISTRO / BANNER ───
 function showRegistrationModal(){openModal('registrationModal')}
 async function salvarRegistro(){if(!document.getElementById('regTermos').checked){alert('Aceite os termos.');return};await api.saveRegistration({nomeEmpresa:document.getElementById('regNome').value,cidade:document.getElementById('regCidade').value,estado:document.getElementById('regEstado').value.toUpperCase(),tipoCozinha:document.getElementById('regTipo').value});closeModal('registrationModal')}
 function showKairuBanner(){
-    if(window.__isPro)return;
     let b=window.__kairuBanner;
     if(!b || !b.active){
         b = { active: true, bgColor: 'linear-gradient(90deg, #ff6b00 0%, #ff8a33 100%)', textColor: '#fff', html: 'Conheça o <strong>Kairu Etiquetas</strong>: Imprima etiquetas de validade térmicas em 3s direto do celular →' }
@@ -886,10 +850,6 @@ function handleBannerClick(){
     const b=window.__kairuBanner;
     if(b && b.bannerId) api.trackBanner(b.bannerId,'click');
     api.openExternal('https://kairulabs.com/etiquetas');
-}
-function showVersionBlock(){
-    document.getElementById('versionBlockModal').classList.add('active');
-    if(window.__versionStatus?.reason) document.getElementById('lblVersionBlockMsg').textContent = window.__versionStatus.reason;
 }
 </script>
 <script src="onboarding.js"></script>

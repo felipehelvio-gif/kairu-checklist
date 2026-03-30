@@ -8,7 +8,8 @@ const kairu = require("./kairu-sdk")
 const { TEMPLATES } = require("./templates")
 const Database = require("./database")
 const { analyzeChecklist, generateSystemPrompt, extractScore } = require("./ai-engine")
-const WhatsAppManager = require("./whatsapp")
+let WhatsAppManager = null
+let wa = null
 
 const PRODUCT = "kairu-checklist"
 const WEB_PORT = 3334
@@ -17,7 +18,6 @@ const configPath = path.join(app.getPath("userData"), "config.json")
 const photosDir = path.join(app.getPath("userData"), "fotos")
 const waSessionDir = path.join(app.getPath("userData"), "wa-session")
 const db = new Database(path.join(app.getPath("userData"), "data"))
-const wa = new WhatsAppManager(waSessionDir)
 
 // Garantir pasta de fotos
 if (!fs.existsSync(photosDir)) fs.mkdirSync(photosDir, { recursive: true })
@@ -29,9 +29,11 @@ function loadConfig() {
     return {
         nomeEmpresa: "", cnpj: "", cidade: "", estado: "",
         tipoCozinha: "", email: "", telefone: "",
-        termosAceitos: false, licenseKey: "",
+        termosAceitos: false,
         apiProvider: "gemini", apiKey: "",
         whatsappGrupoId: "", whatsappGrupoNome: "",
+        // Banner cache (offline)
+        cachedBanner: null,
     }
 }
 
@@ -138,11 +140,10 @@ function startWebServer() {
 
                     // Enviar WhatsApp pro grupo (se configurado e conectado)
                     const config2 = loadConfig()
-                    if (config2.whatsappGrupoId && wa.status === "connected") {
+                    if (wa && config2.whatsappGrupoId && wa.status === "connected") {
                         try {
                             const cl2 = db.getChecklist(checklistId)
-                            const isProStatus = kairu.isPro(config2, app.getPath("userData"))
-                            await wa.sendFeedback(config2.whatsappGrupoId, cl2.nome, preenchidoPor, feedback, score, isProStatus)
+                            await wa.sendFeedback(config2.whatsappGrupoId, cl2.nome, preenchidoPor, feedback, score)
                             db.updatePreenchimento(preenchimento.id, { whatsappEnviado: true })
                         } catch (e) { console.log("WhatsApp falhou:", e.message) }
                     }
@@ -199,13 +200,26 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
-    const { autoUpdater } = require("electron-updater")
+    console.log("🚀 Kairu Checklist iniciando...")
     try {
+        const { autoUpdater } = require("electron-updater")
         autoUpdater.checkForUpdatesAndNotify()
     } catch (e) { console.log('Auto-update config não encontrada (ambiente de dev)') }
 
     createWindow()
     startWebServer()
+
+    // Carregar WhatsApp de forma lazy (Baileys trava event loop no require)
+    // Defer para garantir que a janela renderize primeiro
+    setTimeout(() => {
+        try {
+            WhatsAppManager = require("./whatsapp")
+            wa = new WhatsAppManager(waSessionDir)
+            console.log("📱 WhatsApp module carregado")
+        } catch (e) {
+            console.error("⚠️ WhatsApp module falhou:", e.message)
+        }
+    }, 3000)
 
     const config = loadConfig()
     kairu.getInstallId(config)
@@ -213,35 +227,33 @@ app.whenReady().then(async () => {
     kairu.sendTelemetry(config, PRODUCT)
     kairu.startHeartbeat(config, PRODUCT)
 
-    const banner = await kairu.fetchBanner(config, PRODUCT)
-    const versionStatus = await kairu.checkVersion(config, PRODUCT, app.getVersion())
-    const configDir = app.getPath("userData")
-    const proStatus = kairu.isPro(config, configDir)
+    // Buscar banner remoto (com cache offline)
+    const config2 = loadConfig()
+    const banner = await kairu.fetchBanner(config2, PRODUCT)
+    if (banner) {
+        config2.cachedBanner = banner
+        saveConfig(config2)
+    }
+    const activeBanner = banner || config2.cachedBanner
     const firstRun = kairu.isFirstRun(config)
 
     mainWindow.webContents.on("did-finish-load", () => {
         mainWindow.webContents.executeJavaScript(`
             window.__installId = "${config.installId || ''}";
-            window.__isPro = ${proStatus};
             window.__isFirstRun = ${firstRun};
             window.__localIP = "${getLocalIP()}";
             window.__webPort = ${WEB_PORT};
             window.__photosDir = "${photosDir.replace(/\\/g, '\\\\')}";
-            window.__versionStatus = ${JSON.stringify(versionStatus)};
-            ${banner ? `window.__kairuBanner = ${JSON.stringify(banner)};` : ''}
+            ${activeBanner ? `window.__kairuBanner = ${JSON.stringify(activeBanner)};` : ''}
             
-            if (window.__versionStatus && window.__versionStatus.blocked) {
-                if (typeof showVersionBlock === "function") showVersionBlock();
-            } else {
-                if (${firstRun} && typeof showRegistrationModal === "function") showRegistrationModal();
-                if (typeof showKairuBanner === "function" && !${proStatus}) showKairuBanner();
-                if (typeof initApp === "function") initApp();
-            }
+            if (${firstRun} && typeof showRegistrationModal === "function") showRegistrationModal();
+            if (typeof showKairuBanner === "function") showKairuBanner();
+            if (typeof initApp === "function") initApp();
         `)
     })
 
     // Auto-reconectar WhatsApp se já tem sessão
-    if (fs.readdirSync(waSessionDir).length > 0) {
+    if (wa && fs.readdirSync(waSessionDir).length > 0) {
         console.log("📱 Reconectando WhatsApp (sessão salva)...")
         // Registrar callbacks ANTES de conectar
         wa.statusCallback = (status) => {
@@ -271,7 +283,7 @@ app.whenReady().then(async () => {
         const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
         const today = now.toISOString().slice(0, 10)
 
-        if (wa.status !== "connected") return
+        if (!wa || wa.status !== "connected") return
         const cfg = loadConfig()
         if (!cfg.whatsappGrupoId) return
 
@@ -345,6 +357,7 @@ ipcMain.handle("generate-prompt", (_e, descricao, contexto) => {
 
 // WhatsApp Nativo (Baileys)
 ipcMain.handle("wa-connect", async () => {
+    if (!wa) throw new Error("WhatsApp ainda carregando, tente novamente em alguns segundos")
     // Registrar callbacks para notificar o frontend
     wa.statusCallback = (status) => {
         if (mainWindow && !mainWindow.isDestroyed()) {
@@ -369,13 +382,15 @@ ipcMain.handle("wa-connect", async () => {
 })
 
 ipcMain.handle("wa-disconnect", async () => {
+    if (!wa) return true
     await wa.disconnect()
     return true
 })
 
-ipcMain.handle("wa-status", () => wa.getState())
+ipcMain.handle("wa-status", () => wa ? wa.getState() : { status: "loading", qr: null, hasSession: false })
 
 ipcMain.handle("wa-list-groups", async () => {
+    if (!wa) throw new Error("WhatsApp não carregado")
     return wa.listGroups()
 })
 
@@ -394,8 +409,7 @@ ipcMain.handle("wa-send-result", async (_e, preenchimentoId) => {
     const cl = db.getChecklist(p.checklistId)
     const config = loadConfig()
     if (!config.whatsappGrupoId) throw new Error("Grupo não configurado")
-    const isProStatus = kairu.isPro(config, app.getPath("userData"))
-    await wa.sendFeedback(config.whatsappGrupoId, cl.nome, p.preenchidoPor, p.feedback, p.score, isProStatus)
+    await wa.sendFeedback(config.whatsappGrupoId, cl.nome, p.preenchidoPor, p.feedback, p.score)
     db.updatePreenchimento(preenchimentoId, { whatsappEnviado: true })
     return true
 })
@@ -430,9 +444,6 @@ ipcMain.handle("generate-qrcode", async () => {
     return { url, dataUrl }
 })
 
-// Licença
-ipcMain.handle("validate-license", async (_e, key) => { const c = loadConfig(); c.licenseKey = key; saveConfig(c); return kairu.validateLicense(c, PRODUCT, app.getPath("userData")) })
-ipcMain.handle("check-pro-status", () => kairu.isPro(loadConfig(), app.getPath("userData")))
 ipcMain.handle("save-registration", async (_e, data) => { const c = loadConfig(); Object.assign(c, data, { termosAceitos: true }); saveConfig(c); await kairu.sendRegistration(c, PRODUCT); return true })
 ipcMain.handle("track-banner", async (_e, bannerId, type) => { await kairu.trackBanner(loadConfig(), bannerId, type); return true })
 ipcMain.handle("open-external", (_e, url) => shell.openExternal(url))

@@ -35,10 +35,6 @@ contextBridge.exposeInMainWorld("api", {
     getNetworkInfo: () => ipcRenderer.invoke("get-network-info"),
     generateQRCode: () => ipcRenderer.invoke("generate-qrcode"),
 
-    // Licença
-    validateLicense: (key) => ipcRenderer.invoke("validate-license", key),
-    checkProStatus: () => ipcRenderer.invoke("check-pro-status"),
-
     // Registro
     saveRegistration: (data) => ipcRenderer.invoke("save-registration", data),
     trackBanner: (bannerId, type) => ipcRenderer.invoke("track-banner", bannerId, type),
